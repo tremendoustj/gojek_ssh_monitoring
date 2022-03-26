@@ -34,9 +34,9 @@ class logins(db.Model):
 
 @app.route("/")
 def index():
-    data = db.session.query(logins).all()
+    data = db.session.query(logins)
     print(data)
-    return "GOOD"
+    return render_template("index.html", data=data)
 
 
 @app.route("/add", methods=["POST"])

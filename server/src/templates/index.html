@@ -1,0 +1,25 @@
+<html>
+<head>
+<style>
+table {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+
+th, td {
+  text-align: left;
+  padding: 8px;
+}
+
+tr:nth-child(even) {background-color: #f2f2f2;}
+</style>
+</head>
+<body>
+  <h2>Metrics for ssh login attempts</h2>
+  <table>
+  {% for row in data %}
+    <tr><td>{{ row.hostname }} had {{ row.count }} login attempt.</td></tr>
+  {% endfor %}
+  </table>
+</body>
+</html>
