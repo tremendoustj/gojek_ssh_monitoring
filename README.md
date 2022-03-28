@@ -33,17 +33,34 @@ terraform init
 cd gojek_ssh_monitoring/client/deployment
 terraform apply
 ```
-3. Deploy Client.  Directory path is only for reference. Please change it as per the local checkout.
+- Server Deploy will ask for 1 parameters i.e. the private key pair name to use to associate with EC2 instance.
+```
+var.key_pair_name
+The EC2 Key Pair to associate with the EC2 Instance for SSH access.
+Enter a value: gojek_monitoring.pem`
+```
+- Deploy Client.  Directory path is only for reference. Please change it as per the local checkout.
 ```
 cd gojek_ssh_monitoring/client/deployment
 terraform apply
 ```
+- Client Deploy will ask for 2 parameters i.e. number of instances to launch and the private key pair name to use to associate with EC2 instances.
+```
+var.instance_count
+Number of instances to launch.
+Enter a value: 1
+
+var.key_pair_name
+The EC2 Key Pair to associate with the EC2 Instance for SSH access.
+Enter a value: gojek_monitoring
+  ```
+
 ### TEST SERVER AND CLIENT
-3. Test the server by either running below command or open the ip address in browser. You can get the IP address in public-ip file inside server/deployment directory. It should output the dummy data stored on the server in html format.
+- Test the server by either running below command or open the ip address in browser. You can get the IP address in public-ip file inside server/deployment directory. It should output the dummy data stored on the server in html format.
 ```
 curl http://<SERVER_IP>
 ```
-3. Test the client by ssh to the instance and checking if the count has been updated or not for this instance.
+- Test the client by ssh to the instance and checking if the count has been updated or not for this instance.
 ```
 ssh ubuntu@<CLIENT_IP>
 ```

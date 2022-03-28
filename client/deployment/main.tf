@@ -28,12 +28,13 @@ resource "aws_instance" "client_instance" {
   instance_type          = var.instance_type
   vpc_security_group_ids = [aws_security_group.client_security_group.id]
   key_name               = var.key_pair_name
+  count                  = var.instance_count
 
   # This EC2 Instance has a public IP and will be accessible directly from the public Internet
   associate_public_ip_address = true
 
   tags = {
-    Name = "${var.instance_name}-public"
+    Name = "${var.instance_name}-public-${count.index}"
   }
 }
 
@@ -68,12 +69,12 @@ resource "aws_security_group" "client_security_group" {
 
 resource "null_resource" "example_provisioner" {
   triggers = {
-    public_ip = aws_instance.client_instance.public_ip
+    public_ip = join(",",aws_instance.client_instance.*.public_ip)
   }
 
   connection {
     type  = "ssh"
-    host  = aws_instance.client_instance.public_ip
+    host  = aws_instance.client_instance.*.public_ip
     user  = var.ssh_user
     port  = var.ssh_port
     agent = true
@@ -131,7 +132,7 @@ resource "null_resource" "example_provisioner" {
 
   provisioner "local-exec" {
     # copy the public-ip file back to CWD, which will be tested
-    command = "scp  -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${var.ssh_user}@${aws_instance.client_instance.public_ip}:/tmp/public-ip public-ip"
+    command = "scp  -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${var.ssh_user}@${aws_instance.client_instance.*.public_ip}:/tmp/public-ip public-ip"
   }
 
   provisioner "local-exec" {
