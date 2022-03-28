@@ -23,10 +23,10 @@ provider "aws" {
 # DEPLOY THE EC2 INSTANCE WITH A PUBLIC IP
 # ---------------------------------------------------------------------------------------------------------------------
 
-resource "aws_instance" "example_public" {
+resource "aws_instance" "client_instance" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = var.instance_type
-  vpc_security_group_ids = [aws_security_group.example.id]
+  vpc_security_group_ids = [aws_security_group.client_security_group.id]
   key_name               = var.key_pair_name
 
   # This EC2 Instance has a public IP and will be accessible directly from the public Internet
@@ -41,8 +41,8 @@ resource "aws_instance" "example_public" {
 # CREATE A SECURITY GROUP TO CONTROL WHAT REQUESTS CAN GO IN AND OUT OF THE EC2 INSTANCES
 # ---------------------------------------------------------------------------------------------------------------------
 
-resource "aws_security_group" "example" {
-  name = var.instance_name
+resource "aws_security_group" "client_security_group" {
+  name = "monitoring_client_security_group"
 
   egress {
     from_port   = 0
@@ -60,16 +60,6 @@ resource "aws_security_group" "example" {
     # allow SSH requests from trusted servers, such as a bastion host or VPN server.
     cidr_blocks = ["0.0.0.0/0"]
   }
-
-  ingress {
-    from_port = var.http_port
-    to_port   = var.http_port
-    protocol  = "tcp"
-
-    # To keep this example simple, we allow incoming SSH requests from any IP. In real-world usage, you should only
-    # allow SSH requests from trusted servers, such as a bastion host or VPN server.
-    cidr_blocks = ["0.0.0.0/0"]
-  }
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -78,21 +68,27 @@ resource "aws_security_group" "example" {
 
 resource "null_resource" "example_provisioner" {
   triggers = {
-    public_ip = aws_instance.example_public.public_ip
+    public_ip = aws_instance.client_instance.public_ip
   }
 
   connection {
     type  = "ssh"
-    host  = aws_instance.example_public.public_ip
+    host  = aws_instance.client_instance.public_ip
     user  = var.ssh_user
     port  = var.ssh_port
     agent = true
   }
 
   // copy our example script to the server
+
   provisioner "local-exec" {
     # copy the public-ip file back to CWD, which will be tested
-    command = "zip -r files/gojek_ssh_monitoring_client.zip ../src/"
+    command = <<-EOT
+      mkdir files/gojek_ssh_monitoring_client
+      cp -R ../src files/gojek_ssh_monitoring_client/
+      zip -r files/gojek_ssh_monitoring_client.zip files/gojek_ssh_monitoring_client/
+      rm -rf files/gojek_ssh_monitoring_client/
+    EOT
   }
 
   provisioner "remote-exec" {
@@ -108,11 +104,6 @@ resource "null_resource" "example_provisioner" {
   provisioner "file" {
     source = "files/gojek_ssh_monitoring_client.zip"
     destination = "/tmp/gojek_ssh_monitoring_client.zip"
-  }
-
-  provisioner "file" {
-    source = "files/default"
-    destination = "/tmp/default"
   }
 
   provisioner "file" {
@@ -135,13 +126,17 @@ resource "null_resource" "example_provisioner" {
       "sudo systemctl daemon-reload",
       "sudo systemctl start gojekmonitoring",
       "sudo systemctl enable gojekmonitoring",
-      "sudo systemctl restart nginx",
     ]
   }
 
   provisioner "local-exec" {
     # copy the public-ip file back to CWD, which will be tested
-    command = "scp ${var.ssh_user}@${aws_instance.example_public.public_ip}:/tmp/public-ip public-ip"
+    command = "scp ${var.ssh_user}@${aws_instance.client_instance.public_ip}:/tmp/public-ip public-ip"
+  }
+
+  provisioner "local-exec" {
+    # copy the public-ip file back to CWD, which will be tested
+    command = "rm -f files/gojek_ssh_monitoring_client.zip"
   }
 }
 

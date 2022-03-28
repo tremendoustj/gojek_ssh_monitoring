@@ -1,8 +1,7 @@
 output "public_instance_id" {
-  value = aws_instance.example_public.id
+  value = aws_instance.client_instance.id
 }
 
 output "public_instance_ip" {
-  value = aws_instance.example_public.public_ip
+  value = aws_instance.client_instance.public_ip
 }
-

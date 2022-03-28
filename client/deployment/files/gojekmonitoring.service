@@ -4,7 +4,7 @@ After=network.target
 [Service]
 User=ubuntu
 Group=www-data
-WorkingDirectory=/tmp/gojek_ssh_monitoring_client/src
+WorkingDirectory=/tmp/files/gojek_ssh_monitoring_client/src
 ExecStart=python3 login_monitor.py
 Restart=always
 [Install]

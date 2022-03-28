@@ -39,12 +39,6 @@ variable "ssh_port" {
   default     = 22
 }
 
-variable "http_port" {
-  description = "The port the EC2 Instance should listen on for SSH requests."
-  type        = number
-  default     = 80
-}
-
 variable "ssh_user" {
   description = "SSH user name to use for remote exec connections,"
   type        = string

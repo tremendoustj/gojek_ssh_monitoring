@@ -7,12 +7,14 @@ def _init():
     global HOSTNAME
     global MASTER
     global CURRENT_COUNT
+    print("DIR ",os.path.dirname(os.path.realpath(__file__)))
     parser = ConfigParser()
-    parser.read('files/config.ini')
+    parser.read(os.path.dirname(os.path.realpath(__file__))+"/files/config.ini")
     # INITIALIZE THE GLOBAL SETTINGS
     HOSTNAME = socket.gethostname().strip()
     MASTER=parser['DEFAULT']['master']
     CURRENT_COUNT=_get_login_counts()
+    _update_login_count(CURRENT_COUNT)
 
 def _get_login_counts():
     data=os.popen("utmpdump /var/log/wtmp | grep '\[[7]\]' | wc -l").read().strip()
@@ -21,7 +23,8 @@ def _get_login_counts():
 def _update_login_count(count):
     global MASTER
     global HOSTNAME
-    url = MASTER+"/add"
+    schema = "http://"
+    url = schema+MASTER+"/add"
     data = {"hostname": HOSTNAME, "count": int(count)}
     x = requests.post(url, json=data)
 
