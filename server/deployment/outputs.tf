@@ -1,8 +1,7 @@
 output "public_instance_id" {
-  value = aws_instance.example_public.id
+  value = aws_instance.monitoring_server.id
 }
 
 output "public_instance_ip" {
-  value = aws_instance.example_public.public_ip
+  value = aws_instance.monitoring_server.public_ip
 }
-

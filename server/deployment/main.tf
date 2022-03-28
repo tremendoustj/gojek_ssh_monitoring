@@ -23,10 +23,10 @@ provider "aws" {
 # DEPLOY THE EC2 INSTANCE WITH A PUBLIC IP
 # ---------------------------------------------------------------------------------------------------------------------
 
-resource "aws_instance" "example_public" {
+resource "aws_instance" "monitoring_server" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = var.instance_type
-  vpc_security_group_ids = [aws_security_group.example.id]
+  vpc_security_group_ids = [aws_security_group.server_security_group.id]
   key_name               = var.key_pair_name
 
   # This EC2 Instance has a public IP and will be accessible directly from the public Internet
@@ -41,7 +41,7 @@ resource "aws_instance" "example_public" {
 # CREATE A SECURITY GROUP TO CONTROL WHAT REQUESTS CAN GO IN AND OUT OF THE EC2 INSTANCES
 # ---------------------------------------------------------------------------------------------------------------------
 
-resource "aws_security_group" "example" {
+resource "aws_security_group" "server_security_group" {
   name = var.instance_name
 
   egress {
@@ -76,14 +76,14 @@ resource "aws_security_group" "example" {
 # Provision the server using remote-exec
 # ---------------------------------------------------------------------------------------------------------------------
 
-resource "null_resource" "example_provisioner" {
+resource "null_resource" "server_provisioner" {
   triggers = {
-    public_ip = aws_instance.example_public.public_ip
+    public_ip = aws_instance.monitoring_server.public_ip
   }
 
   connection {
     type  = "ssh"
-    host  = aws_instance.example_public.public_ip
+    host  = aws_instance.monitoring_server.public_ip
     user  = var.ssh_user
     port  = var.ssh_port
     agent = true
@@ -92,7 +92,11 @@ resource "null_resource" "example_provisioner" {
   // copy our example script to the server
   provisioner "local-exec" {
     # copy the public-ip file back to CWD, which will be tested
-    command = "zip -r files/gojek_ssh_monitoring_server.zip ../src/"
+    command = <<-EOT
+      mkdir files/gojek_ssh_monitoring_server
+      cp -R ../src files/gojek_ssh_monitoring_server/
+      zip -r files/gojek_ssh_monitoring_server.zip files/gojek_ssh_monitoring_server/
+    EOT
   }
   provisioner "remote-exec" {
     inline = [
@@ -105,8 +109,8 @@ resource "null_resource" "example_provisioner" {
   }
 
   provisioner "file" {
-    source = "files/gojek_ssh_monitoring.zip"
-    destination = "/tmp/gojek_ssh_monitoring.zip"
+    source = "files/gojek_ssh_monitoring_server.zip"
+    destination = "/tmp/gojek_ssh_monitoring_server.zip"
   }
 
   provisioner "file" {
@@ -129,7 +133,7 @@ resource "null_resource" "example_provisioner" {
     inline = [
       "chmod +x /tmp/get-public-ip.sh",
       "/tmp/get-public-ip.sh > /tmp/public-ip",
-      "unzip /tmp/gojek_ssh_monitoring.zip -d /tmp/",
+      "unzip /tmp/gojek_ssh_monitoring_server.zip -d /tmp/gojek_ssh_monitoring_server/",
       "sudo \\cp /tmp/default /etc/nginx/sites-available/",
       "sudo \\cp /tmp/gojekmonitoring.service /etc/systemd/system/",
       "sudo systemctl daemon-reload",
@@ -141,7 +145,12 @@ resource "null_resource" "example_provisioner" {
 
   provisioner "local-exec" {
     # copy the public-ip file back to CWD, which will be tested
-    command = "scp ${var.ssh_user}@${aws_instance.example_public.public_ip}:/tmp/public-ip public-ip"
+    command = "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${var.ssh_user}@${aws_instance.monitoring_server.public_ip}:/tmp/public-ip public-ip"
+  }
+
+  provisioner "local-exec" {
+    # copy the public-ip file back to CWD, which will be tested
+    command = "python3 files/update_config.py"
   }
 }
 
