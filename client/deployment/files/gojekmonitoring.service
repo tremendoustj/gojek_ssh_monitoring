@@ -1,0 +1,11 @@
+[Unit]
+Description=Gojek Monitoring Client Service
+After=network.target
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/tmp/gojek_ssh_monitoring_client/src
+ExecStart=python3 login_monitor.py
+Restart=always
+[Install]
+WantedBy=multi-user.target

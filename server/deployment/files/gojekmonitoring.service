@@ -1,0 +1,11 @@
+[Unit]
+Description=Gojek Monitoring Server Service
+After=network.target
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/tmp/gojek_ssh_monitoring_server/src
+ExecStart=gunicorn -b localhost:8000 app:app
+Restart=always
+[Install]
+WantedBy=multi-user.target
