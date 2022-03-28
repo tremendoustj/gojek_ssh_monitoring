@@ -96,6 +96,7 @@ resource "null_resource" "server_provisioner" {
       mkdir files/gojek_ssh_monitoring_server
       cp -R ../src files/gojek_ssh_monitoring_server/
       zip -r files/gojek_ssh_monitoring_server.zip files/gojek_ssh_monitoring_server/
+      rm -rf files/gojek_ssh_monitoring_server/
     EOT
   }
   provisioner "remote-exec" {
@@ -151,6 +152,11 @@ resource "null_resource" "server_provisioner" {
   provisioner "local-exec" {
     # copy the public-ip file back to CWD, which will be tested
     command = "python3 files/update_config.py"
+  }
+
+  provisioner "local-exec" {
+    # copy the public-ip file back to CWD, which will be tested
+    command = "rm -f files/gojek_ssh_monitoring_server.zip"
   }
 }
 

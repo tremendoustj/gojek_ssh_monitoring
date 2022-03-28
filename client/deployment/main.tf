@@ -131,7 +131,7 @@ resource "null_resource" "example_provisioner" {
 
   provisioner "local-exec" {
     # copy the public-ip file back to CWD, which will be tested
-    command = "scp ${var.ssh_user}@${aws_instance.client_instance.public_ip}:/tmp/public-ip public-ip"
+    command = "scp  -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${var.ssh_user}@${aws_instance.client_instance.public_ip}:/tmp/public-ip public-ip"
   }
 
   provisioner "local-exec" {

@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Config to ignore some of the dynamically generated monitoring files
+gojek_ssh_monitoring_server*
+*.zip
+*terraform*
+public-ip
